@@ -108,7 +108,7 @@ def generate_qr(
 
     Status: Valid
     """
-    )
+    
 
     qr = qrcode.QRCode(
         version=1,
