@@ -98,9 +98,16 @@ def generate_qr(
         token
     )
 
-    qr_data = (
-        f"booking={booking_id}"
-        f"&token={token}"
+    qr_data = f"""
+    Campus Resource Booking
+
+    Booking ID: {booking_id}
+
+    Student:
+    Reserved Room
+
+    Status: Valid
+    """
     )
 
     qr = qrcode.QRCode(
@@ -421,4 +428,3 @@ def get_qr_details(
     conn.close()
 
     return result
-    

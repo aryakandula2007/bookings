@@ -1,6 +1,11 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime
+from auth import (
+    login,
+    is_logged_in
+)
+
 
 from database import (
     initialize_db,
@@ -45,12 +50,30 @@ st.set_page_config(
     page_title="Campus Resource Manager",
     layout="wide"
 )
+# -------------------------
+# LOGIN SYSTEM
+# -------------------------
 
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False
+
+if not is_logged_in():
+
+    login()
+
+    st.stop()
 initialize_db()
 
 # ----------------------------------
 # SIDEBAR
 # ----------------------------------
+from auth import logout
+if st.sidebar.button("Logout"):
+
+    logout()
+
+    st.rerun()
+
 
 st.sidebar.title("Campus Resource Manager")
 
@@ -112,7 +135,10 @@ elif menu == "Book Resource":
 
     st.title("📅 Book a Resource")
 
-    user = st.text_input("User Name")
+    user = st.session_state.username
+
+    st.write(f"Booking as: {user}")
+
     email = st.text_input("Email")
 
     rooms = get_rooms()
@@ -280,11 +306,17 @@ elif menu == "My Bookings":
 
     bookings = get_bookings()
 
-    st.dataframe(
-        bookings,
-        use_container_width=True
-    )
+    current_user = st.session_state.username
 
+    # DEBUG
+    st.write("Logged in user:", current_user)
+
+    st.write("All bookings:")
+    st.dataframe(bookings)
+
+    user_bookings = bookings[
+        bookings["user_name"] == current_user
+    ]
 # ----------------------------------
 # ANALYTICS
 # ----------------------------------
