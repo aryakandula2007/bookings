@@ -521,6 +521,7 @@ def authenticate_user(
     conn = get_connection()
 
     cursor = conn.cursor()
+    try:
 
     cursor.execute(
         """
@@ -537,7 +538,14 @@ def authenticate_user(
 
     user = cursor.fetchone()
 
-    conn.close()
+    
 
     return user
-                
+    except Exception as e:
+
+        print("DATABASE ERROR:", e)
+        raise
+
+    finally:
+
+        conn.close()
