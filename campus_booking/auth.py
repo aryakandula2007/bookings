@@ -1,45 +1,83 @@
 import streamlit as st
 
-def login():
+from database import (
+    create_user,
+    authenticate_user
+)
 
-    st.subheader("Login")
+def auth_page():
 
-    username = st.text_input("Username")
-    password = st.text_input(
-        "Password",
-        type="password"
+    option = st.radio(
+        "Choose",
+        [
+            "Login",
+            "Sign Up"
+        ]
     )
 
-    if st.button("Login"):
+    if option == "Login":
 
-        if username and password:
+        username = st.text_input(
+            "Username"
+        )
 
-            st.session_state.logged_in = True
-            st.session_state.username = username
+        password = st.text_input(
+            "Password",
+            type="password"
+        )
 
-            return True
+        if st.button("Login"):
 
-        else:
-
-            st.error(
-                "Enter username and password."
+            user = authenticate_user(
+                username,
+                password
             )
 
-    return False
+            if user:
 
+                st.session_state.logged_in = True
+                st.session_state.username = username
 
-def logout():
+                st.rerun()
 
-    st.session_state.logged_in = False
+            else:
 
-    if "username" in st.session_state:
-        del st.session_state["username"]
+                st.error(
+                    "Invalid credentials"
+                )
 
+    else:
 
-def is_logged_in():
+        username = st.text_input(
+            "Choose Username"
+        )
 
-    return st.session_state.get(
-        "logged_in",
-        False
-    )
-    
+        email = st.text_input(
+            "Email"
+        )
+
+        password = st.text_input(
+            "Choose Password",
+            type="password"
+        )
+
+        if st.button("Create Account"):
+
+            success = create_user(
+                username,
+                email,
+                password
+            )
+
+            if success:
+
+                st.success(
+                    "Account Created"
+                )
+
+            else:
+
+                st.error(
+                    "Username already exists"
+                )
+                

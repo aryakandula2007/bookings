@@ -1,10 +1,7 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime
-from auth import (
-    login,
-    is_logged_in
-)
+from auth import auth_page
 
 
 from database import (
@@ -57,12 +54,11 @@ st.set_page_config(
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 
-if not is_logged_in():
+if not st.session_state.logged_in:
 
-    login()
+    auth_page()
 
     st.stop()
-initialize_db()
 
 # ----------------------------------
 # SIDEBAR
