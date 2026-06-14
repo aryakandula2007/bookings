@@ -33,7 +33,19 @@ CREATE TABLE IF NOT EXISTS users (
     role TEXT DEFAULT 'student'
 )
 """)
+try:
+    cursor.execute(
+        "ALTER TABLE users ADD COLUMN username TEXT"
+    )
+except:
+    pass
 
+try:
+    cursor.execute(
+        "ALTER TABLE users ADD COLUMN password TEXT"
+    )
+except:
+        pass
 
     # ---------------- ROOMS ----------------
 
@@ -567,13 +579,15 @@ def create_user(
             """
             INSERT INTO users
             (
+                name,
                 username,
                 email,
                 password
             )
-            VALUES (?,?,?)
+            VALUES (?,?,?,?)
             """,
             (
+                username,
                 username,
                 email,
                 password
@@ -592,5 +606,4 @@ def create_user(
 
     finally:
 
-        conn.close()        
-
+        conn.close()
