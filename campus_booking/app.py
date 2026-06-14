@@ -1,8 +1,5 @@
 import streamlit as st
-import pandas as pd
 from datetime import datetime
-from auth import auth_page
-
 
 from database import (
     initialize_db,
@@ -10,25 +7,36 @@ from database import (
     get_bookings
 )
 
+from auth import (
+    auth_page,
+    logout
+)
+
 from booking import (
     create_booking,
-    check_availability
+    check_availability,
+    get_user_bookings,
+    get_room_schedule,
+    get_available_slots
 )
 
 from waitlist import (
     add_to_waitlist
 )
 
-from ai_recommendation import (
-    recommend_room
+from qr_service import (
+    generate_qr
 )
 
 from analytics import (
-    generate_heatmap
+    generate_heatmap,
+    peak_hours_chart,
+    booking_trend_chart
 )
 
-from qr_service import (
-    generate_qr
+from ai_recommendation import (
+    recommend_room,
+    recommend_multiple_rooms
 )
 
 from email_service import (
@@ -40,16 +48,23 @@ from calendar_service import (
 )
 
 # ----------------------------------
-# INITIALIZATION
+# PAGE CONFIG
 # ----------------------------------
 
 st.set_page_config(
     page_title="Campus Resource Manager",
     layout="wide"
 )
-# -------------------------
-# LOGIN SYSTEM
-# -------------------------
+
+# ----------------------------------
+# DATABASE INIT
+# ----------------------------------
+
+initialize_db()
+
+# ----------------------------------
+# LOGIN
+# ----------------------------------
 
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
@@ -57,21 +72,25 @@ if "logged_in" not in st.session_state:
 if not st.session_state.logged_in:
 
     auth_page()
-
     st.stop()
 
 # ----------------------------------
 # SIDEBAR
 # ----------------------------------
-from auth import logout
-if st.sidebar.button("Logout"):
 
+st.sidebar.title(
+    "🏫 Campus Resource Manager"
+)
+
+st.sidebar.success(
+    f"Logged in as: {st.session_state.username}"
+)
+
+if st.sidebar.button(
+    "Logout"
+):
     logout()
-
     st.rerun()
-
-
-st.sidebar.title("Campus Resource Manager")
 
 menu = st.sidebar.radio(
     "Navigation",
@@ -81,7 +100,7 @@ menu = st.sidebar.radio(
         "Availability",
         "AI Recommendation",
         "My Bookings",
-        "Admin Analytics"
+        "Analytics"
     ]
 )
 
@@ -91,7 +110,9 @@ menu = st.sidebar.radio(
 
 if menu == "Dashboard":
 
-    st.title("🏫 Campus Resource Dashboard")
+    st.title(
+        "🏫 Campus Resource Dashboard"
+    )
 
     rooms = get_rooms()
     bookings = get_bookings()
@@ -104,24 +125,25 @@ if menu == "Dashboard":
     )
 
     col2.metric(
-        "Active Bookings",
+        "Total Bookings",
         len(bookings)
     )
 
-    available = len(rooms) - len(
-        bookings[
-            bookings["booking_date"]
-            == str(datetime.now().date())
-        ]
-    )
+    available_today = len(rooms)
 
     col3.metric(
-        "Available Today",
-        available
+        "Rooms Available",
+        available_today
     )
 
-    st.subheader("Room Overview")
-    st.dataframe(rooms)
+    st.subheader(
+        "Available Resources"
+    )
+
+    st.dataframe(
+        rooms,
+        use_container_width=True
+    )
 
 # ----------------------------------
 # BOOK RESOURCE
@@ -129,15 +151,17 @@ if menu == "Dashboard":
 
 elif menu == "Book Resource":
 
-    st.title("📅 Book a Resource")
+    st.title(
+        "📅 Book a Resource"
+    )
+
+    rooms = get_rooms()
 
     user = st.session_state.username
 
-    st.write(f"Booking as: {user}")
-
-    email = st.text_input("Email")
-
-    rooms = get_rooms()
+    email = st.text_input(
+        "Email"
+    )
 
     room_name = st.selectbox(
         "Select Room",
@@ -156,16 +180,13 @@ elif menu == "Book Resource":
         "End Time"
     )
 
-    attendees = st.number_input(
-        "Expected Attendees",
-        min_value=1,
-        value=1
-    )
-
-    if st.button("Book Now"):
+    if st.button(
+        "Book Now"
+    ):
 
         room_id = rooms[
-            rooms["room_name"] == room_name
+            rooms["room_name"]
+            == room_name
         ]["id"].values[0]
 
         available = check_availability(
@@ -191,11 +212,11 @@ elif menu == "Book Resource":
             )
 
             send_booking_confirmation(
-                 email,
-                 room_name,
-                 booking_date,
-                 start_time,
-                 end_time
+                email,
+                room_name,
+                booking_date,
+                start_time,
+                end_time
             )
 
             add_calendar_event(
@@ -207,6 +228,10 @@ elif menu == "Book Resource":
 
             st.success(
                 "Booking Successful!"
+            )
+
+            st.write(
+                f"Booking ID: {booking_id}"
             )
 
             st.image(
@@ -232,7 +257,9 @@ elif menu == "Book Resource":
 
 elif menu == "Availability":
 
-    st.title("🔍 Room Availability")
+    st.title(
+        "🔍 Room Availability"
+    )
 
     rooms = get_rooms()
 
@@ -240,34 +267,54 @@ elif menu == "Availability":
         "Select Date"
     )
 
-    bookings = get_bookings()
-
     for _, room in rooms.iterrows():
-
-        room_bookings = bookings[
-            (
-                bookings["room_id"]
-                == room["id"]
-            )
-            &
-            (
-                bookings["booking_date"]
-                == str(selected_date)
-            )
-        ]
 
         with st.expander(
             room["room_name"]
         ):
 
-            if room_bookings.empty:
+            room_schedule = get_room_schedule(
+                room["id"],
+                selected_date
+            )
+
+            if room_schedule.empty:
+
                 st.success(
-                    "Available"
+                    "✅ Available All Day"
                 )
+
+                st.write(
+                    "08:00 - 20:00"
+                )
+
             else:
-                st.dataframe(
-                    room_bookings
+
+                st.warning(
+                    "⚠️ Room has bookings"
                 )
+
+                st.dataframe(
+                    room_schedule[
+                        [
+                            "user_name",
+                            "start_time",
+                            "end_time"
+                        ]
+                    ],
+                    use_container_width=True
+                )
+
+                st.subheader(
+                    "Booked Time Slots"
+                )
+
+                for slot in get_available_slots(
+                    room["id"],
+                    selected_date
+                ):
+
+                    st.write(slot)
 
 # ----------------------------------
 # AI RECOMMENDATION
@@ -281,68 +328,119 @@ elif menu == "AI Recommendation":
 
     attendees = st.number_input(
         "Group Size",
-        min_value=1
+        min_value=1,
+        value=1
     )
 
-    room = recommend_room(
-        attendees
-    )
+    if st.button(
+        "Recommend Room"
+    ):
 
-    st.success(
-        f"Recommended Room: {room}"
-    )
+        recommendation = recommend_room(
+            attendees
+        )
+
+        st.success(
+            recommendation
+        )
+
+        alternatives = (
+            recommend_multiple_rooms(
+                attendees
+            )
+        )
+
+        if alternatives:
+
+            st.subheader(
+                "Alternative Rooms"
+            )
+
+            st.dataframe(
+                alternatives,
+                use_container_width=True
+            )
 
 # ----------------------------------
-# BOOKINGS
+# MY BOOKINGS
 # ----------------------------------
 
 elif menu == "My Bookings":
 
-    st.title("📖 My Bookings")
+    st.title(
+        "📖 My Bookings"
+    )
 
-    bookings = get_bookings()
+    current_user = (
+        st.session_state.username
+    )
 
-    current_user = st.session_state.username
+    user_bookings = (
+        get_user_bookings(
+            current_user
+        )
+    )
 
-    # DEBUG
-    st.write("Logged in user:", current_user)
+    if user_bookings.empty:
 
-    st.write("All bookings:")
-    st.dataframe(bookings)
+        st.info(
+            "No bookings found."
+        )
 
-    user_bookings = bookings[
-        bookings["user_name"] == current_user
-    ]
+    else:
+
+        st.success(
+            f"{len(user_bookings)} booking(s) found."
+        )
+
+        st.dataframe(
+            user_bookings,
+            use_container_width=True
+        )
+
 # ----------------------------------
 # ANALYTICS
 # ----------------------------------
 
-elif menu == "Admin Analytics":
+elif menu == "Analytics":
 
     st.title(
-        "📊 Utilization Analytics"
+        "📊 Resource Analytics"
     )
 
-    fig = generate_heatmap()
+    st.subheader(
+        "Room Utilization"
+    )
 
     st.plotly_chart(
-        fig,
+        generate_heatmap(),
         use_container_width=True
     )
 
-    st.dataframe(
-        get_bookings()
+    st.subheader(
+        "Peak Usage Hours"
     )
-    import pandas as pd
-from database import get_connection
 
-conn = get_connection()
+    st.plotly_chart(
+        peak_hours_chart(),
+        use_container_width=True
+    )
 
-df = pd.read_sql_query(
-    "PRAGMA table_info(users)",
-    conn
-)
+    st.subheader(
+        "Booking Trends"
+    )
 
-st.dataframe(df)
+    st.plotly_chart(
+        booking_trend_chart(),
+        use_container_width=True
+    )
 
-conn.close()
+    st.subheader(
+        "All Bookings"
+    )
+
+    st.dataframe(
+        get_bookings(),
+        use_container_width=True
+    )
+    

@@ -5,15 +5,22 @@ from database import (
     authenticate_user
 )
 
+
 def auth_page():
 
+    st.title("🏫 Campus Resource Manager")
+
     option = st.radio(
-        "Choose",
+        "Select Option",
         [
             "Login",
             "Sign Up"
         ]
     )
+
+    # -------------------------
+    # LOGIN
+    # -------------------------
 
     if option == "Login":
 
@@ -38,13 +45,21 @@ def auth_page():
                 st.session_state.logged_in = True
                 st.session_state.username = username
 
+                st.success(
+                    "Login Successful!"
+                )
+
                 st.rerun()
 
             else:
 
                 st.error(
-                    "Invalid credentials"
+                    "Invalid Username or Password"
                 )
+
+    # -------------------------
+    # SIGN UP
+    # -------------------------
 
     else:
 
@@ -61,23 +76,59 @@ def auth_page():
             type="password"
         )
 
+        confirm_password = st.text_input(
+            "Confirm Password",
+            type="password"
+        )
+
         if st.button("Create Account"):
 
-            success = create_user(
-                username,
-                email,
-                password
-            )
+            if not username:
 
-            if success:
+                st.error(
+                    "Username is required"
+                )
 
-                st.success(
-                    "Account Created"
+            elif not email:
+
+                st.error(
+                    "Email is required"
+                )
+
+            elif password != confirm_password:
+
+                st.error(
+                    "Passwords do not match"
                 )
 
             else:
 
-                st.error(
-                    "Username already exists"
+                success = create_user(
+                    username,
+                    email,
+                    password
                 )
-                
+
+                if success:
+
+                    st.success(
+                        "Account Created Successfully!"
+                    )
+
+                    st.info(
+                        "You can now login."
+                    )
+
+                else:
+
+                    st.error(
+                        "Username or Email already exists."
+                    )
+
+
+def logout():
+
+    st.session_state.logged_in = False
+
+    if "username" in st.session_state:
+        del st.session_state["username"]

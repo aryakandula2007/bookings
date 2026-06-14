@@ -1,6 +1,5 @@
 import pandas as pd
 import plotly.express as px
-import plotly.graph_objects as go
 
 from database import (
     get_bookings,
@@ -11,140 +10,65 @@ from database import (
 # TOTAL METRICS
 # ----------------------------------
 
-def get_kpis():
+def get_dashboard_metrics():
 
-    bookings = get_bookings()
     rooms = get_rooms()
-
-    total_rooms = len(rooms)
-
-    total_bookings = len(bookings)
-
-    active_bookings = len(
-        bookings[
-            bookings["status"] == "Booked"
-        ]
-    )
+    bookings = get_bookings()
 
     return {
-        "total_rooms": total_rooms,
-        "total_bookings": total_bookings,
-        "active_bookings": active_bookings
+        "total_rooms": len(rooms),
+        "total_bookings": len(bookings)
     }
+
 
 # ----------------------------------
 # POPULAR ROOMS
 # ----------------------------------
 
-def room_popularity_chart():
+def most_popular_rooms():
 
     bookings = get_bookings()
 
     if bookings.empty:
-        return None
+        return pd.DataFrame()
 
-    room_counts = (
+    popularity = (
         bookings
         .groupby("room_name")
         .size()
-        .reset_index(
-            name="bookings"
+        .reset_index(name="bookings")
+        .sort_values(
+            "bookings",
+            ascending=False
         )
     )
 
-    fig = px.bar(
-        room_counts,
-        x="room_name",
-        y="bookings",
-        title="Most Popular Rooms"
-    )
+    return popularity
 
-    return fig
 
 # ----------------------------------
 # DAILY BOOKINGS
 # ----------------------------------
 
-def daily_bookings_chart():
+def daily_booking_stats():
 
     bookings = get_bookings()
 
     if bookings.empty:
-        return None
+        return pd.DataFrame()
 
     daily = (
         bookings
         .groupby("booking_date")
         .size()
-        .reset_index(
-            name="bookings"
-        )
+        .reset_index(name="count")
     )
 
-    fig = px.line(
-        daily,
-        x="booking_date",
-        y="bookings",
-        markers=True,
-        title="Daily Booking Trend"
-    )
+    return daily
 
-    return fig
 
 # ----------------------------------
-# PEAK HOURS
-# ----------------------------------
-
-def peak_hour_chart():
-
-    bookings = get_bookings()
-
-    if bookings.empty:
-        return None
-
-    hours = []
-
-    for _, row in bookings.iterrows():
-
-        try:
-
-            hour = int(
-                str(
-                    row["start_time"]
-                ).split(":")[0]
-            )
-
-            hours.append(hour)
-
-        except:
-            pass
-
-    df = pd.DataFrame(
-        {
-            "hour": hours
-        }
-    )
-
-    hourly = (
-        df
-        .groupby("hour")
-        .size()
-        .reset_index(
-            name="bookings"
-        )
-    )
-
-    fig = px.bar(
-        hourly,
-        x="hour",
-        y="bookings",
-        title="Peak Usage Hours"
-    )
-
-    return fig
-
-# ----------------------------------
-# UTILIZATION HEATMAP
+# ROOM UTILIZATION CHART
 # ----------------------------------
 
 def generate_heatmap():
@@ -153,148 +77,112 @@ def generate_heatmap():
 
     if bookings.empty:
 
-        fig = go.Figure()
-
-        fig.update_layout(
-            title="No booking data"
+        fig = px.bar(
+            title="No booking data available"
         )
 
         return fig
 
-    data = []
-
-    for _, row in bookings.iterrows():
-
-        try:
-
-            hour = int(
-                str(
-                    row["start_time"]
-                ).split(":")[0]
-            )
-
-            data.append(
-                {
-                    "room":
-                    row["room_name"],
-
-                    "hour":
-                    hour
-                }
-            )
-
-        except:
-            pass
-
-    df = pd.DataFrame(data)
-
-    heatmap = (
-        df.groupby(
-            [
-                "room",
-                "hour"
-            ]
-        )
+    room_usage = (
+        bookings
+        .groupby("room_name")
         .size()
-        .reset_index(
-            name="count"
-        )
+        .reset_index(name="bookings")
     )
 
-    fig = px.density_heatmap(
-        heatmap,
-        x="hour",
-        y="room",
-        z="count",
-        title="Room Utilization Heatmap"
+    fig = px.bar(
+        room_usage,
+        x="room_name",
+        y="bookings",
+        title="Room Utilization"
     )
 
     return fig
 
+
 # ----------------------------------
-# ROOM UTILIZATION %
+# PEAK HOURS CHART
+# ----------------------------------
+
+def peak_hours_chart():
+
+    bookings = get_bookings()
+
+    if bookings.empty:
+
+        fig = px.bar(
+            title="No booking data available"
+        )
+
+        return fig
+
+    bookings["hour"] = (
+        bookings["start_time"]
+        .astype(str)
+        .str[:2]
+    )
+
+    peak = (
+        bookings
+        .groupby("hour")
+        .size()
+        .reset_index(name="bookings")
+    )
+
+    fig = px.bar(
+        peak,
+        x="hour",
+        y="bookings",
+        title="Peak Usage Hours"
+    )
+
+    return fig
+
+
+# ----------------------------------
+# BOOKING TREND CHART
+# ----------------------------------
+
+def booking_trend_chart():
+
+    daily = daily_booking_stats()
+
+    if daily.empty:
+
+        fig = px.line(
+            title="No booking data available"
+        )
+
+        return fig
+
+    fig = px.line(
+        daily,
+        x="booking_date",
+        y="count",
+        markers=True,
+        title="Booking Trend"
+    )
+
+    return fig
+
+
+# ----------------------------------
+# ROOM UTILIZATION TABLE
 # ----------------------------------
 
 def utilization_table():
-
-    rooms = get_rooms()
-    bookings = get_bookings()
-
-    results = []
-
-    for _, room in rooms.iterrows():
-
-        usage = len(
-
-            bookings[
-                bookings["room_id"]
-                == room["id"]
-            ]
-
-        )
-
-        utilization = (
-            usage * 5
-        )
-
-        if utilization > 100:
-            utilization = 100
-
-        results.append(
-            {
-                "Room":
-                room["room_name"],
-
-                "Utilization (%)":
-                utilization
-            }
-        )
-
-    return pd.DataFrame(
-        results
-    )
-
-# ----------------------------------
-# TOP ROOMS
-# ----------------------------------
-
-def most_booked_rooms():
 
     bookings = get_bookings()
 
     if bookings.empty:
         return pd.DataFrame()
 
-    result = (
+    utilization = (
         bookings
         .groupby("room_name")
         .size()
-        .reset_index(
-            name="bookings"
-        )
-        .sort_values(
-            "bookings",
-            ascending=False
-        )
+        .reset_index(name="bookings")
     )
 
-    return result
-
-# ----------------------------------
-# ADMIN SUMMARY
-# ----------------------------------
-
-def admin_summary():
-
-    kpis = get_kpis()
-
-    popular = most_booked_rooms()
-
-    utilization = utilization_table()
-
-    return {
-        "kpis": kpis,
-        "popular_rooms": popular,
-        "utilization": utilization
-    }
+    return utilization
     

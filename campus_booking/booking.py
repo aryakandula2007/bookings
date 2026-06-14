@@ -1,68 +1,10 @@
-from datetime import datetime, timedelta
 from database import (
-    get_connection,
     create_booking,
-    add_waitlist
+    get_bookings
 )
 
 # ----------------------------------
-# CONFIGURATION
-# ----------------------------------
-
-MAX_BOOKING_HOURS = 4
-MIN_BOOKING_MINUTES = 30
-
-# ----------------------------------
-# TIME HELPERS
-# ----------------------------------
-
-def to_datetime(date_value, time_value):
-    """
-    Converts booking date and time
-    into a single datetime object.
-    """
-
-    return datetime.strptime(
-        f"{date_value} {time_value}",
-        "%Y-%m-%d %H:%M:%S"
-    )
-
-
-def booking_duration_hours(
-    booking_date,
-    start_time,
-    end_time
-):
-
-    start_dt = to_datetime(
-        str(booking_date),
-        str(start_time)
-    )
-
-    end_dt = to_datetime(
-        str(booking_date),
-        str(end_time)
-    )
-
-    duration = end_dt - start_dt
-
-    return duration.total_seconds() / 3600
-
-
-# ----------------------------------
-# CHECK ROOM CAPACITY
-# ----------------------------------
-
-def validate_capacity(
-    room_capacity,
-    attendees
-):
-
-    return attendees <= room_capacity
-
-
-# ----------------------------------
-# AVAILABILITY CHECK
+# CHECK AVAILABILITY
 # ----------------------------------
 
 def check_availability(
@@ -72,379 +14,126 @@ def check_availability(
     end_time
 ):
 
-    conn = get_connection()
+    bookings = get_bookings()
 
-    cursor = conn.cursor()
-
-    cursor.execute(
-        """
-        SELECT start_time,
-               end_time
-        FROM bookings
-
-        WHERE room_id = ?
-        AND booking_date = ?
-        """,
+    room_bookings = bookings[
         (
-            room_id,
-            str(booking_date)
+            bookings["room_id"] == room_id
         )
-    )
+        &
+        (
+            bookings["booking_date"]
+            == str(booking_date)
+        )
+    ]
 
-    existing_bookings = cursor.fetchall()
+    start_time = str(start_time)
+    end_time = str(end_time)
 
-    conn.close()
+    for _, booking in room_bookings.iterrows():
 
-    requested_start = datetime.strptime(
-        str(start_time),
-        "%H:%M:%S"
-    )
-
-    requested_end = datetime.strptime(
-        str(end_time),
-        "%H:%M:%S"
-    )
-
-    for booking in existing_bookings:
-
-        existing_start = datetime.strptime(
-            booking[0],
-            "%H:%M:%S"
+        existing_start = str(
+            booking["start_time"]
         )
 
-        existing_end = datetime.strptime(
-            booking[1],
-            "%H:%M:%S"
+        existing_end = str(
+            booking["end_time"]
         )
 
-        overlap = (
-            requested_start < existing_end
+        # Overlapping booking
+        if (
+            start_time < existing_end
             and
-            requested_end > existing_start
-        )
-
-        if overlap:
+            end_time > existing_start
+        ):
             return False
 
     return True
 
 
 # ----------------------------------
-# VALIDATE BOOKING
+# USER BOOKINGS
 # ----------------------------------
 
-def validate_booking(
-    booking_date,
-    start_time,
-    end_time
+def get_user_bookings(
+    username
 ):
 
-    duration = booking_duration_hours(
-        booking_date,
-        start_time,
-        end_time
-    )
+    bookings = get_bookings()
 
-    if duration <= 0:
-        return (
-            False,
-            "End time must be after start time."
-        )
-
-    if duration > MAX_BOOKING_HOURS:
-        return (
-            False,
-            f"Maximum booking is {MAX_BOOKING_HOURS} hours."
-        )
-
-    if duration < (
-        MIN_BOOKING_MINUTES / 60
-    ):
-        return (
-            False,
-            f"Minimum booking is {MIN_BOOKING_MINUTES} minutes."
-        )
-
-    return (
-        True,
-        "Valid booking."
-    )
+    return bookings[
+        bookings["user_name"]
+        == username
+    ]
 
 
 # ----------------------------------
-# CREATE BOOKING LOGIC
+# ROOM SCHEDULE
 # ----------------------------------
 
-def book_room(
+def get_room_schedule(
     room_id,
-    user_name,
-    email,
-    booking_date,
-    start_time,
-    end_time
+    booking_date
 ):
 
-    valid, message = validate_booking(
-        booking_date,
-        start_time,
-        end_time
+    bookings = get_bookings()
+
+    room_bookings = bookings[
+        (
+            bookings["room_id"]
+            == room_id
+        )
+        &
+        (
+            bookings["booking_date"]
+            == str(booking_date)
+        )
+    ]
+
+    return room_bookings.sort_values(
+        by="start_time"
     )
 
-    if not valid:
 
-        return {
-            "success": False,
-            "message": message
-        }
+# ----------------------------------
+# AVAILABLE TIME SLOTS
+# ----------------------------------
 
-    available = check_availability(
+def get_available_slots(
+    room_id,
+    booking_date
+):
+
+    room_bookings = get_room_schedule(
         room_id,
-        booking_date,
-        start_time,
-        end_time
+        booking_date
     )
 
-    if not available:
+    if room_bookings.empty:
 
-        add_waitlist(
-            room_id,
-            user_name,
-            email
+        return [
+            "08:00 - 20:00 (Fully Available)"
+        ]
+
+    slots = []
+
+    for _, booking in room_bookings.iterrows():
+
+        slots.append(
+            f"Booked: {booking['start_time']} - {booking['end_time']}"
         )
 
-        return {
-            "success": False,
-            "message":
-            "Room unavailable. Added to waitlist."
-        }
-
-    booking_id = create_booking(
-        room_id,
-        user_name,
-        email,
-        booking_date,
-        start_time,
-        end_time
-    )
-
-    return {
-        "success": True,
-        "booking_id": booking_id,
-        "message": "Booking confirmed."
-    }
+    return slots
 
 
 # ----------------------------------
-# CANCEL BOOKING
+# EXPORTS
 # ----------------------------------
 
-def cancel_booking(
-    booking_id
-):
-
-    conn = get_connection()
-    cursor = conn.cursor()
-
-    cursor.execute(
-        """
-        DELETE FROM bookings
-        WHERE id = ?
-        """,
-        (booking_id,)
-    )
-
-    conn.commit()
-    conn.close()
-
-    promote_waitlist_user()
-
-
-# ----------------------------------
-# WAITLIST PROMOTION
-# ----------------------------------
-
-def promote_waitlist_user():
-
-    conn = get_connection()
-    cursor = conn.cursor()
-
-    cursor.execute(
-        """
-        SELECT *
-        FROM waitlist
-        ORDER BY request_time ASC
-        LIMIT 1
-        """
-    )
-
-    next_user = cursor.fetchone()
-
-    if not next_user:
-
-        conn.close()
-        return
-
-    waitlist_id = next_user[0]
-
-    cursor.execute(
-        """
-        DELETE FROM waitlist
-        WHERE id = ?
-        """,
-        (waitlist_id,)
-    )
-
-    conn.commit()
-    conn.close()
-
-    print(
-        f"Promoted waitlist user: "
-        f"{next_user[2]}"
-    )
-
-
-# ----------------------------------
-# EXPIRE NO-SHOW BOOKINGS
-# ----------------------------------
-
-def release_no_show_bookings():
-
-    conn = get_connection()
-
-    cursor = conn.cursor()
-
-    current_time = datetime.now()
-
-    cursor.execute(
-        """
-        SELECT id,
-               booking_date,
-               start_time
-
-        FROM bookings
-        """
-    )
-
-    bookings = cursor.fetchall()
-
-    for booking in bookings:
-
-        booking_id = booking[0]
-
-        start_dt = datetime.strptime(
-            f"{booking[1]} {booking[2]}",
-            "%Y-%m-%d %H:%M:%S"
-        )
-
-        grace_period = (
-            start_dt +
-            timedelta(minutes=15)
-        )
-
-        if current_time > grace_period:
-
-            cursor.execute(
-                """
-                SELECT *
-                FROM checkins
-                WHERE booking_id = ?
-                """,
-                (booking_id,)
-            )
-
-            checked_in = cursor.fetchone()
-
-            if not checked_in:
-
-                cursor.execute(
-                    """
-                    DELETE FROM bookings
-                    WHERE id = ?
-                    """,
-                    (booking_id,)
-                )
-
-    conn.commit()
-    conn.close()
-
-
-# ----------------------------------
-# GET AVAILABLE ROOMS
-# ----------------------------------
-
-def get_available_rooms(
-    booking_date,
-    start_time,
-    end_time
-):
-
-    conn = get_connection()
-
-    rooms = conn.execute(
-        """
-        SELECT *
-        FROM rooms
-        """
-    ).fetchall()
-
-    available_rooms = []
-
-    for room in rooms:
-
-        room_id = room[0]
-
-        if check_availability(
-            room_id,
-            booking_date,
-            start_time,
-            end_time
-        ):
-            available_rooms.append(room)
-
-    conn.close()
-
-    return available_rooms
-
-
-# ----------------------------------
-# BOOKING STATISTICS
-# ----------------------------------
-
-def total_bookings():
-
-    conn = get_connection()
-
-    cursor = conn.cursor()
-
-    cursor.execute(
-        """
-        SELECT COUNT(*)
-        FROM bookings
-        """
-    )
-
-    count = cursor.fetchone()[0]
-
-    conn.close()
-
-    return count
-
-
-def total_waitlisted():
-
-    conn = get_connection()
-
-    cursor = conn.cursor()
-
-    cursor.execute(
-        """
-        SELECT COUNT(*)
-        FROM waitlist
-        """
-    )
-
-    count = cursor.fetchone()[0]
-
-    conn.close()
-
-    return count
+__all__ = [
+    "create_booking",
+    "check_availability",
+    "get_user_bookings",
+    "get_room_schedule",
+    "get_available_slots"
+]
