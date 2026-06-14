@@ -333,3 +333,16 @@ elif menu == "Admin Analytics":
     st.dataframe(
         get_bookings()
     )
+    import pandas as pd
+from database import get_connection
+
+conn = get_connection()
+
+df = pd.read_sql_query(
+    "PRAGMA table_info(users)",
+    conn
+)
+
+st.dataframe(df)
+
+conn.close()
