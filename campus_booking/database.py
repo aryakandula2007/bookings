@@ -521,31 +521,33 @@ def authenticate_user(
     conn = get_connection()
 
     cursor = conn.cursor()
+
     try:
 
-    cursor.execute(
-        """
-        SELECT *
-        FROM users
-        WHERE username=?
-        AND password=?
-        """,
-        (
-            username,
-            password
+        cursor.execute(
+            """
+            SELECT *
+            FROM users
+            WHERE username=?
+            AND password=?
+            """,
+            (
+                username,
+                password
+            )
         )
-    )
 
-    user = cursor.fetchone()
+        user = cursor.fetchone()
 
-    
+        return user
 
-    return user
     except Exception as e:
 
         print("DATABASE ERROR:", e)
-        raise
+
+        return None
 
     finally:
 
         conn.close()
+        
