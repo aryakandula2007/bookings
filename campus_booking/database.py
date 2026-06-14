@@ -21,6 +21,20 @@ def initialize_db():
 
     conn = get_connection()
     cursor = conn.cursor()
+    try:
+        cursor.execute(
+            "ALTER TABLE users ADD COLUMN username TEXT"
+        )
+    except Exception as e:
+        print(e)
+
+    try:
+        cursor.execute(
+            "ALTER TABLE users ADD COLUMN password TEXT"
+        )
+    except Exception as e:
+        print(e)
+
 
     cursor.execute("""
     CREATE TABLE IF NOT EXISTS users (
@@ -608,4 +622,3 @@ def create_user(
     finally:
 
         conn.close()
-        
