@@ -3,10 +3,6 @@ from database import (
     get_bookings
 )
 
-# ----------------------------------
-# CHECK AVAILABILITY
-# ----------------------------------
-
 def check_availability(
     room_id,
     booking_date,
@@ -40,7 +36,6 @@ def check_availability(
             booking["end_time"]
         )
 
-        # Overlapping booking
         if (
             start_time < existing_end
             and
@@ -50,10 +45,6 @@ def check_availability(
 
     return True
 
-
-# ----------------------------------
-# USER BOOKINGS
-# ----------------------------------
 
 def get_user_bookings(
     username
@@ -79,10 +70,6 @@ def get_user_bookings(
         == username
     ]
 
-# ----------------------------------
-# ROOM SCHEDULE
-# ----------------------------------
-
 
 def get_room_schedule(
     room_id,
@@ -99,87 +86,36 @@ def get_room_schedule(
         &
         (
             bookings["booking_date"]
-            .astype(str)
-            ==
-            str(booking_date)
+            == str(booking_date)
         )
     ]
 
     return room_bookings
 
 
-# ----------------------------------
-# AVAILABLE TIME SLOTS
-# ----------------------------------
+def get_available_slots(
+    room_id,
+    booking_date
+):
 
-elif menu == "Availability":
-
-    st.title("🔍 Room Availability")
-
-    rooms = get_rooms()
-
-    selected_date = st.date_input(
-        "Select Date"
+    room_bookings = get_room_schedule(
+        room_id,
+        booking_date
     )
 
-    for _, room in rooms.iterrows():
+    if room_bookings.empty:
 
-        with st.expander(
-            room["room_name"]
-        ):
+        return [
+            "08:00 - 20:00 (Fully Available)"
+        ]
 
-            room_schedule = get_room_schedule(
-                room["id"],
-                selected_date
-            )
+    slots = []
 
-            if room_schedule.empty:
+    for _, booking in room_bookings.iterrows():
 
-                st.success(
-                    "✅ Available All Day"
-                )
+        slots.append(
+            f"Booked: {booking['start_time']} - {booking['end_time']}"
+        )
 
-                st.write(
-                    "08:00 - 20:00"
-                )
-
-            else:
-
-                st.warning(
-                    "⚠️ Room has bookings"
-                )
-
-                st.dataframe(
-                    room_schedule[
-                        [
-                            "user_name",
-                            "start_time",
-                            "end_time"
-                        ]
-                    ],
-                    use_container_width=True
-                )
-
-                st.subheader(
-                    "Booked Time Slots"
-                )
-
-                for slot in get_available_slots(
-                    room["id"],
-                    selected_date
-                ):
-
-                    st.write(slot)
-
-
-# ----------------------------------
-# EXPORTS
-# ----------------------------------
-
-__all__ = [
-    "create_booking",
-    "check_availability",
-    "get_user_bookings",
-    "get_room_schedule",
-    "get_available_slots"
-]
+    return slots
+    
