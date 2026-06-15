@@ -277,6 +277,9 @@ elif menu == "Availability":
                 room["id"],
                 selected_date
             )
+            st.write("Room ID:", room["id"])
+            st.write("Selected Date:", selected_date)
+            st.dataframe(room_schedule)
 
             if room_schedule.empty:
 
@@ -367,36 +370,45 @@ elif menu == "AI Recommendation":
 
 elif menu == "My Bookings":
 
-    st.title(
-        "📖 My Bookings"
+    st.title("📖 My Bookings")
+
+    current_user = st.session_state.username
+
+    st.write(
+        "Current User:",
+        current_user
     )
 
-    current_user = (
-        st.session_state.username
+    all_bookings = get_bookings()
+
+    st.subheader(
+        "All Bookings"
     )
 
-    user_bookings = (
-        get_user_bookings(
-            current_user
-        )
+    st.dataframe(
+        all_bookings,
+        use_container_width=True
     )
 
-    if user_bookings.empty:
+    user_bookings = all_bookings[
+        all_bookings["user_name"]
+        .astype(str)
+        .str.strip()
+        .str.lower()
+        ==
+        str(current_user)
+        .strip()
+        .lower()
+    ]
 
-        st.info(
-            "No bookings found."
-        )
+    st.subheader(
+        "My Bookings"
+    )
 
-    else:
-
-        st.success(
-            f"{len(user_bookings)} booking(s) found."
-        )
-
-        st.dataframe(
-            user_bookings,
-            use_container_width=True
-        )
+    st.dataframe(
+        user_bookings,
+        use_container_width=True
+    )
 
 # ----------------------------------
 # ANALYTICS
