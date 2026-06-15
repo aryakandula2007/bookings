@@ -294,6 +294,8 @@ def create_booking(
 
 def get_bookings():
 
+    print("USING JOIN VERSION")
+
     conn = get_connection()
 
     query = """
@@ -318,6 +320,8 @@ def get_bookings():
         query,
         conn
     )
+
+    print(df.columns)
 
     conn.close()
 
