@@ -1,7 +1,15 @@
 import sqlite3
 import pandas as pd
 
+import os
+
 DB_NAME = "campus.db"
+
+print(
+    "DATABASE LOCATION:",
+    os.path.abspath(DB_NAME)
+)
+
 
 
 # -----------------------------
