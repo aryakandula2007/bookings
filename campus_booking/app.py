@@ -426,7 +426,8 @@ elif menu == "Analytics":
 
     st.plotly_chart(
         generate_heatmap(),
-        use_container_width=True
+        use_container_width=True,
+        key="room_utilization"
     )
 
     st.subheader(
@@ -435,7 +436,8 @@ elif menu == "Analytics":
 
     st.plotly_chart(
         peak_hours_chart(),
-        use_container_width=True
+        use_container_width=True,
+        key="peak_usage"
     )
 
     st.subheader(
@@ -444,15 +446,23 @@ elif menu == "Analytics":
 
     st.plotly_chart(
         booking_trend_chart(),
-        use_container_width=True
+        use_container_width=True,
+        key="booking_trends"
     )
 
     st.subheader(
         "All Bookings"
     )
 
+    bookings = get_bookings()
+
+    st.write(
+        "Total Bookings:",
+        len(bookings)
+    )
+
     st.dataframe(
-        get_bookings(),
+        bookings,
         use_container_width=True
     )
     
