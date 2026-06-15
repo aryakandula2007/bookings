@@ -31,7 +31,8 @@ from qr_service import (
 from analytics import (
     generate_heatmap,
     peak_hours_chart,
-    booking_trend_chart
+    booking_trend_chart,
+    booking_debug
 )
 
 from ai_recommendation import (
@@ -416,48 +417,16 @@ elif menu == "My Bookings":
 
 elif menu == "Analytics":
 
-    st.title(
-        "📊 Resource Analytics"
-    )
+    st.title("📊 Analytics Debug")
 
-    st.subheader(
-        "Room Utilization"
-    )
-
-    st.plotly_chart(
-        generate_heatmap(),
-        use_container_width=True,
-        key="room_utilization"
-    )
-
-    st.subheader(
-        "Peak Usage Hours"
-    )
-
-    st.plotly_chart(
-        peak_hours_chart(),
-        use_container_width=True,
-        key="peak_usage"
-    )
-
-    st.subheader(
-        "Booking Trends"
-    )
-
-    st.plotly_chart(
-        booking_trend_chart(),
-        use_container_width=True,
-        key="booking_trends"
-    )
-
-    st.subheader(
-        "All Bookings"
+    st.write(
+        booking_debug()
     )
 
     bookings = get_bookings()
 
     st.write(
-        "Total Bookings:",
+        "Total bookings:",
         len(bookings)
     )
 
@@ -465,4 +434,3 @@ elif menu == "Analytics":
         bookings,
         use_container_width=True
     )
-    

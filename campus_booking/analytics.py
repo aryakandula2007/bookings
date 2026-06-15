@@ -7,7 +7,7 @@ from database import (
 )
 
 # ----------------------------------
-# TOTAL METRICS
+# DASHBOARD METRICS
 # ----------------------------------
 
 def get_dashboard_metrics():
@@ -32,7 +32,10 @@ def most_popular_rooms():
     if bookings.empty:
         return pd.DataFrame()
 
-    popularity = (
+    if "room_name" not in bookings.columns:
+        return pd.DataFrame()
+
+    return (
         bookings
         .groupby("room_name")
         .size()
@@ -42,8 +45,6 @@ def most_popular_rooms():
             ascending=False
         )
     )
-
-    return popularity
 
 
 # ----------------------------------
@@ -57,18 +58,19 @@ def daily_booking_stats():
     if bookings.empty:
         return pd.DataFrame()
 
-    daily = (
+    if "booking_date" not in bookings.columns:
+        return pd.DataFrame()
+
+    return (
         bookings
         .groupby("booking_date")
         .size()
         .reset_index(name="count")
     )
 
-    return daily
-
 
 # ----------------------------------
-# ROOM UTILIZATION CHART
+# ROOM UTILIZATION
 # ----------------------------------
 
 def generate_heatmap():
@@ -77,11 +79,15 @@ def generate_heatmap():
 
     if bookings.empty:
 
-        fig = px.bar(
-            title="No booking data available"
+        return px.bar(
+            title="No Bookings Found"
         )
 
-        return fig
+    if "room_name" not in bookings.columns:
+
+        return px.bar(
+            title="room_name column missing"
+        )
 
     room_usage = (
         bookings
@@ -101,7 +107,7 @@ def generate_heatmap():
 
 
 # ----------------------------------
-# PEAK HOURS CHART
+# PEAK HOURS
 # ----------------------------------
 
 def peak_hours_chart():
@@ -110,11 +116,17 @@ def peak_hours_chart():
 
     if bookings.empty:
 
-        fig = px.bar(
-            title="No booking data available"
+        return px.bar(
+            title="No Bookings Found"
         )
 
-        return fig
+    if "start_time" not in bookings.columns:
+
+        return px.bar(
+            title="start_time column missing"
+        )
+
+    bookings = bookings.copy()
 
     bookings["hour"] = (
         bookings["start_time"]
@@ -140,7 +152,7 @@ def peak_hours_chart():
 
 
 # ----------------------------------
-# BOOKING TREND CHART
+# BOOKING TREND
 # ----------------------------------
 
 def booking_trend_chart():
@@ -149,11 +161,9 @@ def booking_trend_chart():
 
     if daily.empty:
 
-        fig = px.line(
-            title="No booking data available"
+        return px.line(
+            title="No Booking Trend Data"
         )
-
-        return fig
 
     fig = px.line(
         daily,
@@ -167,7 +177,7 @@ def booking_trend_chart():
 
 
 # ----------------------------------
-# ROOM UTILIZATION TABLE
+# UTILIZATION TABLE
 # ----------------------------------
 
 def utilization_table():
@@ -177,12 +187,28 @@ def utilization_table():
     if bookings.empty:
         return pd.DataFrame()
 
-    utilization = (
+    if "room_name" not in bookings.columns:
+        return pd.DataFrame()
+
+    return (
         bookings
         .groupby("room_name")
         .size()
         .reset_index(name="bookings")
     )
 
-    return utilization
+
+# ----------------------------------
+# DEBUG FUNCTION
+# ----------------------------------
+
+def booking_debug():
+
+    bookings = get_bookings()
+
+    return {
+        "rows": len(bookings),
+        "columns": list(bookings.columns)
+    }
+    
     
