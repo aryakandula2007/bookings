@@ -288,33 +288,17 @@ def get_bookings():
 
     conn = get_connection()
 
-    query = """
-    SELECT
-        b.id,
-        b.room_id,
-        r.room_name,
-        b.user_name,
-        b.email,
-        b.booking_date,
-        b.start_time,
-        b.end_time,
-        b.status
-
-    FROM bookings b
-
-    JOIN rooms r
-    ON b.room_id = r.id
-    """
-
     df = pd.read_sql_query(
-        query,
+        "SELECT * FROM bookings",
         conn
     )
+
+    print("BOOKINGS TABLE:")
+    print(df)
 
     conn.close()
 
     return df
-
 
 # -----------------------------
 # WAITLIST
