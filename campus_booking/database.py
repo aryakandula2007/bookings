@@ -271,6 +271,12 @@ def create_booking(
     )
 
     booking_id = cursor.lastrowid
+    print(
+    "BOOKING INSERTED:",
+    room_id,
+    user_name,
+    booking_date
+)
 
     conn.commit()
     conn.close()
