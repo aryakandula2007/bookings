@@ -417,18 +417,9 @@ elif menu == "My Bookings":
 
 elif menu == "Analytics":
 
-    st.title("📊 Analytics Debug")
-
-    st.write(
-        booking_debug()
-    )
+    st.title("Analytics")
 
     bookings = get_bookings()
-
-    st.write(
-        "Total bookings:",
-        len(bookings)
-    )
 
     st.dataframe(
         bookings,
