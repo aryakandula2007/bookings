@@ -258,9 +258,7 @@ elif menu == "Book Resource":
 
 elif menu == "Availability":
 
-    st.title(
-        "🔍 Room Availability"
-    )
+    st.title("🔍 Room Availability")
 
     rooms = get_rooms()
 
@@ -268,19 +266,27 @@ elif menu == "Availability":
         "Select Date"
     )
 
+    bookings = get_bookings()
+
     for _, room in rooms.iterrows():
 
         with st.expander(
             room["room_name"]
         ):
 
-            room_schedule = get_room_schedule(
-                room["id"],
-                selected_date
-            )
-            st.write("Room ID:", room["id"])
-            st.write("Selected Date:", selected_date)
-            st.dataframe(room_schedule)
+            room_schedule = bookings[
+                (
+                    bookings["room_id"]
+                    == room["id"]
+                )
+                &
+                (
+                    bookings["booking_date"]
+                    .astype(str)
+                    ==
+                    str(selected_date)
+                )
+            ]
 
             if room_schedule.empty:
 
@@ -288,14 +294,10 @@ elif menu == "Availability":
                     "✅ Available All Day"
                 )
 
-                st.write(
-                    "08:00 - 20:00"
-                )
-
             else:
 
                 st.warning(
-                    "⚠️ Room has bookings"
+                    "⚠️ Room Booked"
                 )
 
                 st.dataframe(
@@ -308,18 +310,7 @@ elif menu == "Availability":
                     ],
                     use_container_width=True
                 )
-
-                st.subheader(
-                    "Booked Time Slots"
-                )
-
-                for slot in get_available_slots(
-                    room["id"],
-                    selected_date
-                ):
-
-                    st.write(slot)
-
+                
 # ----------------------------------
 # AI RECOMMENDATION
 # ----------------------------------
@@ -375,24 +366,10 @@ elif menu == "My Bookings":
 
     current_user = st.session_state.username
 
-    st.write(
-        "Current User:",
-        current_user
-    )
+    bookings = get_bookings()
 
-    all_bookings = get_bookings()
-
-    st.subheader(
-        "All Bookings"
-    )
-
-    st.dataframe(
-        all_bookings,
-        use_container_width=True
-    )
-
-    user_bookings = all_bookings[
-        all_bookings["user_name"]
+    user_bookings = bookings[
+        bookings["user_name"]
         .astype(str)
         .str.strip()
         .str.lower()
@@ -402,15 +379,18 @@ elif menu == "My Bookings":
         .lower()
     ]
 
-    st.subheader(
-        "My Bookings"
-    )
+    if user_bookings.empty:
 
-    st.dataframe(
-        user_bookings,
-        use_container_width=True
-    )
+        st.warning(
+            "No bookings found."
+        )
 
+    else:
+
+        st.dataframe(
+            user_bookings,
+            use_container_width=True
+        )
 # ----------------------------------
 # ANALYTICS
 # ----------------------------------
