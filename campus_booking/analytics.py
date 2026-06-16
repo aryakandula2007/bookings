@@ -179,5 +179,33 @@ def booking_debug():
         "rows": len(bookings),
         "columns": list(bookings.columns)
     }
+def best_time_to_visit():
+
+    bookings = get_bookings()
+
+    if bookings.empty:
+        return "No booking data"
+
+    bookings = bookings.copy()
+
+    bookings["hour"] = (
+        bookings["start_time"]
+        .astype(str)
+        .str[:2]
+        .astype(int)
+    )
+
+    usage = (
+        bookings
+        .groupby("hour")
+        .size()
+        .reset_index(name="count")
+    )
+
+    least_busy = usage.loc[
+        usage["count"].idxmin()
+    ]
+
+    return f"{least_busy['hour']}:00"
     
     
