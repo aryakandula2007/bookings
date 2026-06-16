@@ -143,7 +143,7 @@ def initialize_db():
             pass
 
     
-    cursor.execute("DELETE FROM bookings")
+    
     conn.commit()
     conn.close()
 

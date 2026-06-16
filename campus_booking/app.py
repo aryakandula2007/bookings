@@ -147,83 +147,136 @@ if menu == "Dashboard":
     st.dataframe(
         rooms,
         use_container_width=True
-    )
-
 # ----------------------------------
-# BOOK RESOURCe
-# ---------------------------------
+# BOOK RESOURCE
+# ----------------------------------
 
-# -------------------------
 elif menu == "Book Resource":
 
- st.title("📅 Book a Resource")
+    st.title("📅 Book a Resource")
 
+    rooms = get_rooms()
 
- rooms = get_rooms()
+    user = st.session_state.username
 
- user = st.session_state.username
+    email = st.text_input("Email")
 
- email = st.text_input("Email")
-
-room_name = st.selectbox(
-    "Select Room",
-    rooms["room_name"]
-)
-
- booking_date = st.date_input(
-    "Booking Date"
-)
-
- start_time = st.time_input(
-    "Start Time"
-)
-
- end_time = st.time_input(
-    "End Time"
-)
-
-if st.button("Book Now"):
-
-    room_id = int(
-        rooms[
-            rooms["room_name"] == room_name
-        ]["id"].iloc[0]
+    room_name = st.selectbox(
+        "Select Room",
+        rooms["room_name"]
     )
 
-    available = check_availability(
-        room_id,
-        booking_date,
-        start_time,
-        end_time
+    booking_date = st.date_input(
+        "Booking Date"
     )
 
-    if available:
+    start_time = st.time_input(
+        "Start Time"
+    )
 
-        booking_id = create_booking(
+    end_time = st.time_input(
+        "End Time"
+    )
+
+    if st.button("Book Now"):
+
+        room_id = int(
+            rooms[
+                rooms["room_name"] == room_name
+            ]["id"].iloc[0]
+        )
+
+        available = check_availability(
             room_id,
-            user,
-            email,
             booking_date,
             start_time,
             end_time
         )
 
-        st.success(
-            f"Booking Successful! ID: {booking_id}"
-        )
+        if available:
 
-    else:
+            booking_id = create_booking(
+                room_id,
+                user,
+                email,
+                booking_date,
+                start_time,
+                end_time
+            )
 
-        add_to_waitlist(
-            room_id,
-            user,
-            email
-        )
+            st.success(
+                f"Booking Successful! ID: {booking_id}"
+            )
 
-        st.warning(
-            "Room unavailable. Added to waitlist."
-        )
+        else:
 
+            add_to_waitlist(
+                room_id,
+                user,
+                email
+            )
+
+            st.warning(
+                "Room unavailable. Added to waitlist."
+            )
+
+# ----------------------------------
+# AVAILABILITY
+# ----------------------------------
+
+elif menu == "Availability":
+
+    st.title("🔍 Room Availability")
+
+    rooms = get_rooms()
+
+    selected_date = st.date_input(
+        "Select Date"
+    )
+
+    for _, room in rooms.iterrows():
+
+        with st.expander(room["room_name"]):
+
+            room_schedule = get_room_schedule(
+                room["id"],
+                selected_date
+            )
+
+            if room_schedule.empty:
+
+                st.success(
+                    "✅ Available All Day"
+                )
+
+            else:
+
+                st.warning(
+                    "⚠️ Room Has Bookings"
+                )
+
+                st.dataframe(
+                    room_schedule[
+                        [
+                            "user_name",
+                            "start_time",
+                            "end_time"
+                        ]
+                    ],
+                    use_container_width=True
+                )
+
+                st.subheader(
+                    "Booked Time Slots"
+                )
+
+                for _, booking in room_schedule.iterrows():
+
+                    st.write(
+                        f"{booking['start_time']} - {booking['end_time']}"
+                    )
+
+# ----------------------------------
 # AI RECOMMENDATION
 # ----------------------------------
 
@@ -251,10 +304,8 @@ elif menu == "AI Recommendation":
             recommendation
         )
 
-        alternatives = (
-            recommend_multiple_rooms(
-                attendees
-            )
+        alternatives = recommend_multiple_rooms(
+            attendees
         )
 
         if alternatives:
@@ -268,6 +319,7 @@ elif menu == "AI Recommendation":
                 use_container_width=True
             )
 
+#
 # ----------------------------------
 # MY BOOKINGS
 # ----------------------------------
