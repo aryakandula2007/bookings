@@ -273,30 +273,14 @@ elif menu == "Availability":
 
     for _, room in rooms.iterrows():
 
-    with st.expander(
-        room["room_name"]
-    ):
+        with st.expander(
+            room["room_name"]
+        ):
 
-        st.write(
-            "Selected Date:",
-            selected_date
-        )
-
-        if not bookings.empty:
-
-            st.write(
-                bookings[
-                    [
-                        "room_id",
-                        "booking_date"
-                    ]
-                ]
-            )
-
-        room_schedule = bookings[
-            bookings["room_id"]
-            == room["id"]
-        ]
+            room_schedule = bookings[
+                bookings["room_id"]
+                == room["id"]
+            ]
 
             if room_schedule.empty:
 
@@ -307,19 +291,32 @@ elif menu == "Availability":
             else:
 
                 st.warning(
-                    "⚠️ Room Booked"
+                    "⚠️ Room Has Bookings"
                 )
 
                 st.dataframe(
                     room_schedule[
                         [
                             "user_name",
+                            "booking_date",
                             "start_time",
                             "end_time"
                         ]
                     ],
                     use_container_width=True
                 )
+
+                st.subheader(
+                    "Booked Time Slots"
+                )
+
+                for _, booking in room_schedule.iterrows():
+
+                    st.write(
+                        f"{booking['booking_date']} | "
+                        f"{booking['start_time']} - "
+                        f"{booking['end_time']}"
+                    )
                 
 # ----------------------------------
 # AI RECOMMENDATION
