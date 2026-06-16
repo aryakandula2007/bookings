@@ -155,169 +155,94 @@ if menu == "Dashboard":
 
 elif menu == "Book Resource":
 
-    st.title(
-        "📅 Book a Resource"
+```
+st.title(
+    "📅 Book a Resource"
+)
+
+rooms = get_rooms()
+
+user = st.session_state.username
+
+email = st.text_input(
+    "Email"
+)
+
+room_name = st.selectbox(
+    "Select Room",
+    rooms["room_name"]
+)
+
+booking_date = st.date_input(
+    "Booking Date"
+)
+
+start_time = st.time_input(
+    "Start Time"
+)
+
+end_time = st.time_input(
+    "End Time"
+)
+
+if st.button(
+    "Book Now"
+):
+
+    room_id = int(
+        rooms[
+            rooms["room_name"] == room_name
+        ]["id"].iloc[0]
     )
-    rooms = get_rooms()
 
-    user = st.session_state.username
-
-    email = st.text_input(
-        "Email"
+    st.write(
+        "Selected Room ID:",
+        room_id
     )
 
-    room_name = st.selectbox(
-        "Select Room",
-        rooms["room_name"]
+    available = check_availability(
+        room_id,
+        booking_date,
+        start_time,
+        end_time
     )
 
-    booking_date = st.date_input(
-        "Booking Date"
-    )
+    if available:
 
-    start_time = st.time_input(
-        "Start Time"
-    )
-
-    end_time = st.time_input(
-        "End Time"
-    )
-
-    if st.button(
-        "Book Now"
-    ):
-
-        room_id = int(
-             rooms[
-                   rooms["room_name"] == room_name
-           ]["id"].iloc[0]
-        )
-        st.write("Selected Room ID:", room_id)
-
-
-        available = check_availability(
+        booking_id = create_booking(
             room_id,
+            user,
+            email,
             booking_date,
             start_time,
             end_time
         )
 
-        if available:
+        st.success(
+            "Booking Successful!"
+        )
 
-            booking_id = create_booking(
-                room_id,
-                user,
-                email,
-                booking_date,
-                start_time,
-                end_time
-            )
-            st.write("Booking Saved")
+        st.write(
+            f"Booking ID: {booking_id}"
+        )
 
-            st.dataframe(
-                get_bookings()
-            )
+        st.dataframe(
+            get_bookings()
+        )
 
-            qr_path = generate_qr(
-                booking_id
-            )
+    else:
 
-            send_booking_confirmation(
-                email,
-                room_name,
-                booking_date,
-                start_time,
-                end_time
-            )
+        add_to_waitlist(
+            room_id,
+            user,
+            email
+        )
 
-            add_calendar_event(
-                room_name,
-                booking_date,
-                start_time,
-                end_time
-            )
+        st.warning(
+            "Room unavailable. Added to waitlist."
+        )
 
-            st.success(
-                "Booking Successful!"
-            )
 
-            st.write(
-                f"Booking ID: {booking_id}"
-            )
-
-            st.image(
-                qr_path,
-                width=250
-            )
-
-        else:
-
-            add_to_waitlist(
-                room_id,
-                user,
-                email
-            )
-
-            st.warning(
-                "Room unavailable. Added to waitlist."
-            )
-
-# ----------------------------------
-# AVAILABILITY
-# ----------------------------------
-
-elif menu == "Availability":
-
-    st.title("🔍 Room Availability")
-
-    rooms = get_rooms()
-
-    bookings = get_bookings()
-
-    st.subheader("All Bookings")
-
-    st.dataframe(
-        bookings,
-        use_container_width=True
-    )
-
-    for _, room in rooms.iterrows():
-
-        with st.expander(
-            f"{room['room_name']} (ID: {room['id']})"
-        ):
-
-            st.write(
-                "Room ID:",
-                room["id"]
-            )
-
-            room_schedule = bookings[
-                bookings["room_id"]
-                == room["id"]
-            ]
-
-            st.write(
-                "Matching Bookings:"
-            )
-
-            st.dataframe(
-                room_schedule,
-                use_container_width=True
-            )
-
-            if room_schedule.empty:
-
-                st.success(
-                    "Available All Day"
-                )
-
-            else:
-
-                st.warning(
-                    "Room Has Bookings"
-                )
-                
 # ----------------------------------
 # AI RECOMMENDATION
 # ----------------------------------
