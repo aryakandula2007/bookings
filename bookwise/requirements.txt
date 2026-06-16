@@ -1,0 +1,8 @@
+streamlit
+pandas
+plotly
+numpy
+qrcode[pil]
+Pillow
+python-dotenv
+icalendar
