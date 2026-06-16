@@ -152,10 +152,8 @@ if menu == "Dashboard":
 # ----------------------------------
 # BOOK RESOURCe
 # ----------------------------------
-
 elif menu == "Book Resource":
 
-```
 st.title(
     "📅 Book a Resource"
 )
