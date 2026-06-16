@@ -26,9 +26,7 @@ from waitlist import (
     add_to_waitlist
 )
 
-from qr_service import (
-    generate_booking_qr
-)
+
 
 from analytics import (
     generate_heatmap,
@@ -310,23 +308,7 @@ elif menu == "Book Resource":
                 f"Booking Successful! ID: {booking_id}"
             )
 
-            try:
-
-                qr_path = generate_booking_qr(
-                    booking_id,
-                    room_name,
-                    booking_date,
-                    start_time,
-                    end_time
-                )
-
-                st.image(
-                    qr_path,
-                    caption="Booking QR"
-                )
-
-            except:
-                pass
+            
 
             try:
 
