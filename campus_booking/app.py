@@ -156,16 +156,16 @@ if menu == "Dashboard":
 # -------------------------
 elif menu == "Book Resource":
 
- st.title("📅 Book a Resource")
+st.title("📅 Book a Resource")
 
 
- rooms = get_rooms()
+rooms = get_rooms()
 
- user = st.session_state.username
+user = st.session_state.username
 
-  email = st.text_input("Email")
+email = st.text_input("Email")
 
- room_name = st.selectbox(
+room_name = st.selectbox(
     "Select Room",
     rooms["room_name"]
 )
