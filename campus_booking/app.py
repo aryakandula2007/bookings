@@ -273,21 +273,30 @@ elif menu == "Availability":
 
     for _, room in rooms.iterrows():
 
-        with st.expander(
-            room["room_name"]
-        ):
-        st.write("Selected Date:", selected_date)
+    with st.expander(
+        room["room_name"]
+    ):
 
-         if not bookings.empty:
-             st.write(
-                 bookings[
-                    ["room_id", "booking_date"]
+        st.write(
+            "Selected Date:",
+            selected_date
+        )
+
+        if not bookings.empty:
+
+            st.write(
+                bookings[
+                    [
+                        "room_id",
+                        "booking_date"
+                    ]
+                ]
+            )
+
+        room_schedule = bookings[
+            bookings["room_id"]
+            == room["id"]
         ]
-    )
-
-           room_schedule = bookings[
-                 bookings["room_id"] == room["id"]
-]
 
             if room_schedule.empty:
 
