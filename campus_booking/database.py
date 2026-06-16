@@ -142,6 +142,8 @@ def initialize_db():
         except:
             pass
 
+    
+    cursor.execute("DELETE FROM bookings")
     conn.commit()
     conn.close()
 

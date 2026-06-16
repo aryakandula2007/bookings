@@ -188,10 +188,13 @@ elif menu == "Book Resource":
         "Book Now"
     ):
 
-        room_id = rooms[
-            rooms["room_name"]
-            == room_name
-        ]["id"].values[0]
+        room_id = int(
+             rooms[
+                   rooms["room_name"] == room_name
+           ]["id"].iloc[0]
+        )
+        st.write("Selected Room ID:", room_id)
+        
 
         available = check_availability(
             room_id,
