@@ -265,58 +265,51 @@ elif menu == "Availability":
 
     rooms = get_rooms()
 
-    selected_date = st.date_input(
-        "Select Date"
-    )
-
     bookings = get_bookings()
+
+    st.subheader("All Bookings")
+
+    st.dataframe(
+        bookings,
+        use_container_width=True
+    )
 
     for _, room in rooms.iterrows():
 
         with st.expander(
-            room["room_name"]
+            f"{room['room_name']} (ID: {room['id']})"
         ):
+
+            st.write(
+                "Room ID:",
+                room["id"]
+            )
 
             room_schedule = bookings[
                 bookings["room_id"]
                 == room["id"]
             ]
 
+            st.write(
+                "Matching Bookings:"
+            )
+
+            st.dataframe(
+                room_schedule,
+                use_container_width=True
+            )
+
             if room_schedule.empty:
 
                 st.success(
-                    "✅ Available All Day"
+                    "Available All Day"
                 )
 
             else:
 
                 st.warning(
-                    "⚠️ Room Has Bookings"
+                    "Room Has Bookings"
                 )
-
-                st.dataframe(
-                    room_schedule[
-                        [
-                            "user_name",
-                            "booking_date",
-                            "start_time",
-                            "end_time"
-                        ]
-                    ],
-                    use_container_width=True
-                )
-
-                st.subheader(
-                    "Booked Time Slots"
-                )
-
-                for _, booking in room_schedule.iterrows():
-
-                    st.write(
-                        f"{booking['booking_date']} | "
-                        f"{booking['start_time']} - "
-                        f"{booking['end_time']}"
-                    )
                 
 # ----------------------------------
 # AI RECOMMENDATION
