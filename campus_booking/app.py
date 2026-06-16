@@ -151,51 +151,43 @@ if menu == "Dashboard":
 
 # ----------------------------------
 # BOOK RESOURCe
-# ----------------------------------
+# ---------------------------------
+
+# -------------------------
 elif menu == "Book Resource":
 
- st.title(
-    "📅 Book a Resource"
-)
+ st.title("📅 Book a Resource")
 
-rooms = get_rooms()
 
-user = st.session_state.username
+ rooms = get_rooms()
 
-email = st.text_input(
-    "Email"
-)
+ user = st.session_state.username
 
-room_name = st.selectbox(
+  email = st.text_input("Email")
+
+ room_name = st.selectbox(
     "Select Room",
     rooms["room_name"]
 )
 
-booking_date = st.date_input(
+ booking_date = st.date_input(
     "Booking Date"
 )
 
-start_time = st.time_input(
+ start_time = st.time_input(
     "Start Time"
 )
 
-end_time = st.time_input(
+ end_time = st.time_input(
     "End Time"
 )
 
-if st.button(
-    "Book Now"
-):
+if st.button("Book Now"):
 
     room_id = int(
         rooms[
             rooms["room_name"] == room_name
         ]["id"].iloc[0]
-    )
-
-    st.write(
-        "Selected Room ID:",
-        room_id
     )
 
     available = check_availability(
@@ -217,15 +209,7 @@ if st.button(
         )
 
         st.success(
-            "Booking Successful!"
-        )
-
-        st.write(
-            f"Booking ID: {booking_id}"
-        )
-
-        st.dataframe(
-            get_bookings()
+            f"Booking Successful! ID: {booking_id}"
         )
 
     else:
@@ -240,8 +224,6 @@ if st.button(
             "Room unavailable. Added to waitlist."
         )
 
-
-# ----------------------------------
 # AI RECOMMENDATION
 # ----------------------------------
 
