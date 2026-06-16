@@ -32,8 +32,11 @@ from analytics import (
     generate_heatmap,
     peak_hours_chart,
     booking_trend_chart,
-    booking_debug
+    most_popular_rooms_chart,
+    user_activity_chart,
+    best_time_to_visit
 )
+
 
 from ai_recommendation import (
     recommend_room,
@@ -397,11 +400,68 @@ elif menu == "My Bookings":
 
 elif menu == "Analytics":
 
-    st.title("Analytics")
+    st.title("📊 Resource Analytics")
 
-    bookings = get_bookings()
+    st.metric(
+        "Recommended Time",
+        best_time_to_visit()
+    )
+
+    st.subheader(
+        "Room Utilization"
+    )
+
+    st.plotly_chart(
+        generate_heatmap(),
+        use_container_width=True,
+        key="utilization"
+    )
+
+    st.subheader(
+        "Most Popular Rooms"
+    )
+
+    st.plotly_chart(
+        most_popular_rooms_chart(),
+        use_container_width=True,
+        key="popular_rooms"
+    )
+
+    st.subheader(
+        "Peak Usage Hours"
+    )
+
+    st.plotly_chart(
+        peak_hours_chart(),
+        use_container_width=True,
+        key="peak_hours"
+    )
+
+    st.subheader(
+        "Booking Trends"
+    )
+
+    st.plotly_chart(
+        booking_trend_chart(),
+        use_container_width=True,
+        key="booking_trends"
+    )
+
+    st.subheader(
+        "User Activity"
+    )
+
+    st.plotly_chart(
+        user_activity_chart(),
+        use_container_width=True,
+        key="user_activity"
+    )
+
+    st.subheader(
+        "All Bookings"
+    )
 
     st.dataframe(
-        bookings,
+        get_bookings(),
         use_container_width=True
     )
