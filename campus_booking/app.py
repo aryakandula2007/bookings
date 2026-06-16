@@ -147,6 +147,8 @@ if menu == "Dashboard":
     st.dataframe(
         rooms,
         use_container_width=True
+    )
+    
 # ----------------------------------
 # BOOK RESOURCE
 # ----------------------------------
