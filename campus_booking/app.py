@@ -150,15 +150,14 @@ if menu == "Dashboard":
     )
 
 # ----------------------------------
-# BOOK RESOURCE
+# BOOK RESOURCe
 # ----------------------------------
 
-elif menu == "Book Resource":
+ elif menu == "Book Resource":
 
     st.title(
         "📅 Book a Resource"
     )
-
     rooms = get_rooms()
 
     user = st.session_state.username
@@ -194,7 +193,7 @@ elif menu == "Book Resource":
            ]["id"].iloc[0]
         )
         st.write("Selected Room ID:", room_id)
-        
+
 
         available = check_availability(
             room_id,
@@ -212,6 +211,11 @@ elif menu == "Book Resource":
                 booking_date,
                 start_time,
                 end_time
+            )
+            st.write("Booking Saved")
+
+            st.dataframe(
+                get_bookings()
             )
 
             qr_path = generate_qr(
